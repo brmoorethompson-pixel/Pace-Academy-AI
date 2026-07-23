@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#152229;
+    --panel:#1D2E36;
+    --panel-2:#24373F;
+    --line:#3B535C;
+    --text:#EDF1F0;
+    --text-soft:#9FB4BC;
+    --signal:#E08A3C;
+    --signal-soft:#3A2C1E;
+    --static:#5C6B71;
+    --correct:#6FA98A;
+    --wrong:#C1614F;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top, rgba(224,138,60,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:44px 18px 90px;
+  }
+  .app{width:100%;max-width:660px;}
+
+  .wordmark{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .wordmark-left{display:flex;align-items:baseline;gap:10px;}
+  .wordmark .name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:21px;
+    letter-spacing:-0.01em;
+  }
+  .wordmark .name .dot{color:var(--signal);}
+  .wordmark .tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-soft);
+  }
+  .wordmark-right{display:flex;align-items:center;gap:10px;}
+  .icon-btn{
+    background:none;
+    border:1px solid var(--line);
+    border-radius:50%;
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    color:var(--text-soft);
+    flex-shrink:0;
+  }
+  .icon-btn:hover{border-color:var(--signal);color:var(--signal);}
+  .guide-btn{
+    border-radius:16px;
+    width:auto;
+    padding:0 12px;
+    gap:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+  }
+
+  hr.rule{border:none;border-top:1px solid var(--line);margin:16px 0 22px;}
+
+  /* dial / progress */
+  .dial-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .freq{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--signal);
+    letter-spacing:0.03em;
+  }
+  .level-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--text-soft);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:3px 10px;
+  }
+  .level-chip.pulse{animation:levelPulse .5s ease;}
+  @keyframes levelPulse{0%{transform:scale(1.12);border-color:var(--signal);color:var(--signal);}100%{transform:scale(1);}}
+
+  .bars-row{display:flex;gap:4px;align-items:flex-end;margin-bottom:26px;height:16px;}
+  .bar{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:1px;
+    transition:background .3s ease, border-color .3s ease;
+  }
+  .bar:nth-child(8n+1){height:40%;} /* unused fallback */
+  .bars-row .bar{height:100%;}
+  .bar.filled{border-color:transparent;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:34px 32px;
+    position:relative;
+    animation:cardIn .35s ease;
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* Intro */
+  .intro h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:30px;
+    line-height:1.2;
+    margin:0 0 16px;
+  }
+  .intro h1 span{color:var(--signal);}
+  .intro p{
+    font-size:15.5px;
+    line-height:1.65;
+    color:var(--text-soft);
+    margin:0 0 14px;
+  }
+  .intro .note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--text-soft);
+    border-left:2px solid var(--signal);
+    padding-left:14px;
+    margin:22px 0 28px;
+    line-height:1.6;
+  }
+  .how-it-works{
+    display:flex;
+    gap:14px;
+    margin:22px 0 26px;
+  }
+  .how-step{flex:1;border:1px solid var(--line);border-radius:var(--radius);padding:14px;}
+  .how-step .step-num{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--signal);letter-spacing:0.08em;margin-bottom:6px;}
+  .how-step .step-desc{font-size:12.5px;color:var(--text-soft);line-height:1.5;}
+
+  /* Vocab round */
+  .stage-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--signal);
+    margin-bottom:16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .static-icon{width:14px;height:14px;flex-shrink:0;}
+  .term-word{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:34px;
+    margin:0 0 8px;
+  }
+  .term-sub{
+    font-size:14px;
+    color:var(--text-soft);
+    margin:0 0 26px;
+  }
+  .vocab-choices{display:flex;flex-direction:column;gap:10px;margin-bottom:6px;}
+  .vocab-btn{
+    text-align:left;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    font-family:'Inter', sans-serif;
+    font-size:14.5px;
+    color:var(--text);
+    cursor:pointer;
+    transition:border-color .15s ease, transform .1s ease, background .2s ease;
+  }
+  .vocab-btn:hover:not(:disabled){border-color:var(--signal);}
+  .vocab-btn:focus-visible{outline:2px solid var(--signal); outline-offset:2px;}
+  .vocab-btn:active:not(:disabled){transform:translateY(1px);}
+  .vocab-btn.correct{border-color:var(--correct);background:rgba(111,169,138,0.12);}
+  .vocab-btn.wrong{border-color:var(--wrong);background:rgba(193,97,79,0.12);}
+  .vocab-btn:disabled{cursor:default;}
+  .vocab-letter{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--text-soft);
+    margin-right:10px;
+  }
+
+  .vocab-result{
+    margin-top:20px;
+    padding:16px;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    background:var(--panel-2);
+  }
+  .vocab-result .rt{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:8px;
+  }
+  .vocab-result .rt.ok{color:var(--correct);}
+  .vocab-result .rt.no{color:var(--wrong);}
+  .vocab-result .rd{font-size:14px;line-height:1.6;color:var(--text-soft);}
+
+  .next-btn{
+    background:var(--signal);
+    color:#1A140B;
+    border:none;
+    border-radius:var(--radius);
+    padding:13px 22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    margin-top:20px;
+  }
+  .next-btn:hover{filter:brightness(1.1);}
+  .next-btn:focus-visible{outline:2px solid var(--text); outline-offset:2px;}
+
+  .begin-btn{
+    background:var(--signal);
+    color:#1A140B;
+    border:none;
+    border-radius:var(--radius);
+    padding:14px 24px;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .begin-btn:hover{filter:brightness(1.1);}
+
+  /* Scenario */
+  .scenario{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:21px;
+    line-height:1.45;
+    margin:0 0 26px;
+    color:var(--text);
+  }
+  .term-callout{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--signal);
+    border:1px solid var(--signal);
+    border-radius:12px;
+    padding:3px 10px;
+    margin-bottom:18px;
+  }
+  .choices{display:flex;flex-direction:column;gap:10px;}
+  .choice-btn{
+    text-align:left;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+    color:var(--text);
+    cursor:pointer;
+    transition:border-color .15s ease, transform .1s ease;
+  }
+  .choice-btn:hover{border-color:var(--signal);}
+  .choice-btn:focus-visible{outline:2px solid var(--signal); outline-offset:2px;}
+  .choice-btn:active{transform:translateY(1px);}
+  .choice-letter{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--text-soft);
+    margin-right:10px;
+  }
+
+  /* Feedback */
+  .tag{
+    position:absolute;
+    top:24px;
+    right:28px;
+    border:1.5px dashed;
+    border-radius:6px;
+    padding:5px 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    transform:rotate(-6deg) scale(0.6);
+    opacity:0;
+    animation:tagIn .45s cubic-bezier(.34,1.56,.64,1) .15s forwards;
+    pointer-events:none;
+  }
+  @keyframes tagIn{to{opacity:.9;transform:rotate(-6deg) scale(1);}}
+
+  .chosen-echo{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--text-soft);
+    margin-bottom:18px;
+    line-height:1.6;
+  }
+  .chosen-echo span{color:var(--text);}
+  .feedback-text{font-size:15.5px;line-height:1.65;margin:0 0 28px;}
+
+  .meter-wrap{margin:0 0 28px;}
+  .meter-heads{
+    display:flex;justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;letter-spacing:0.05em;text-transform:uppercase;
+    color:var(--text-soft);margin-bottom:8px;
+  }
+  .meter-track{
+    position:relative;height:8px;border-radius:4px;
+    background:linear-gradient(to right, #C1614F, #5C6B71, #E08A3C, #6FA98A);
+    border:1px solid var(--line);
+  }
+  .meter-knob{
+    position:absolute;top:50%;width:15px;height:15px;
+    background:var(--text);border:2px solid var(--panel);
+    border-radius:50%;transform:translate(-50%,-50%);
+    transition:left .6s cubic-bezier(.22,.9,.3,1);
+    box-shadow:0 0 0 1px var(--line);
+  }
+  .meter-zone{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;color:var(--signal);margin-top:10px;text-align:center;
+  }
+
+  .reflect{margin:0 0 24px;}
+  .reflect label{
+    display:block;font-family:'IBM Plex Mono', monospace;
+    font-size:11px;text-transform:uppercase;letter-spacing:0.05em;
+    color:var(--text-soft);margin-bottom:8px;
+  }
+  .reflect textarea{
+    width:100%;min-height:60px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:10px 12px;font-family:'Inter', sans-serif;font-size:14px;
+    color:var(--text);resize:vertical;
+  }
+  .reflect textarea:focus-visible{outline:2px solid var(--signal);}
+  .reflect .hint{font-size:11.5px;color:var(--text-soft);margin-top:6px;font-style:italic;}
+
+  .kbd-hint{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--text-soft);margin-top:16px;}
+  .kbd-hint kbd{border:1px solid var(--line);border-radius:3px;padding:1px 5px;background:var(--panel-2);}
+
+  /* Summary */
+  .summary h2{font-family:'Space Grotesk', sans-serif;font-weight:700;font-size:24px;margin:0 0 8px;}
+  .summary .sub{font-size:13.5px;color:var(--text-soft);margin:0 0 24px;line-height:1.6;}
+
+  .field-report{
+    border:1px solid var(--signal);
+    border-radius:var(--radius);
+    padding:26px;
+    margin-bottom:28px;
+    background:var(--signal-soft);
+  }
+  .field-report .eyebrow{
+    font-family:'IBM Plex Mono', monospace;font-size:10px;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--signal);margin-bottom:10px;
+  }
+  .field-report .persona-row{display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+  .field-report .persona-icon{width:42px;height:42px;flex-shrink:0;color:var(--signal);}
+  .field-report h2{font-size:22px;margin:0;}
+  .field-report p{font-size:14px;line-height:1.65;color:var(--text-soft);margin:0 0 10px;}
+  .field-report .caveat{
+    font-size:12px;font-style:italic;color:var(--text-soft);
+    border-top:1px solid rgba(224,138,60,0.3);padding-top:10px;margin-top:14px;
+  }
+
+  .xp-summary{
+    display:flex;justify-content:space-between;align-items:center;
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:26px;
+  }
+  .xp-summary .xs-left .xs-title{font-family:'Space Grotesk', sans-serif;font-weight:600;font-size:16px;}
+  .xp-summary .xs-left .xs-sub{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--text-soft);margin-top:3px;}
+
+  .glossary-grid{display:flex;flex-direction:column;gap:8px;margin:16px 0 28px;}
+  .g-card{
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;background:var(--panel-2);
+  }
+  .g-card .g-term{font-family:'Space Grotesk', sans-serif;font-weight:600;font-size:14.5px;color:var(--signal);}
+  .g-card .g-def{font-size:12.5px;color:var(--text-soft);margin-top:4px;line-height:1.5;}
+
+  .badges-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;margin:16px 0 28px;}
+  .achievement{
+    border:1px solid var(--line);border-radius:var(--radius);padding:12px;
+    display:flex;gap:10px;align-items:flex-start;background:var(--panel-2);
+  }
+  .achievement.locked{opacity:.4;}
+  .achievement .a-icon{width:19px;height:19px;flex-shrink:0;color:var(--signal);margin-top:2px;}
+  .achievement .a-title{font-size:12.5px;font-weight:600;}
+  .achievement .a-desc{font-size:11px;color:var(--text-soft);line-height:1.4;margin-top:2px;}
+
+  .log-row{
+    border-top:1px solid var(--line);padding:13px 0;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;
+  }
+  .log-row:last-of-type{border-bottom:1px solid var(--line);}
+  .log-left .log-case{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.05em;}
+  .log-left .log-choice{font-size:13.5px;margin-top:3px;}
+  .log-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+  .closing{font-size:14px;line-height:1.65;color:var(--text-soft);margin:24px 0 26px;}
+
+  .save-btn{
+    background:transparent;border:1px solid var(--signal);color:var(--signal);
+    border-radius:var(--radius);padding:12px 20px;
+    font-family:'IBM Plex Mono', monospace;font-size:12px;letter-spacing:0.06em;
+    text-transform:uppercase;cursor:pointer;margin-right:10px;margin-bottom:10px;
+  }
+  .save-btn:hover{background:var(--signal);color:#1A140B;}
+  .restart-btn{
+    background:var(--text);border:none;color:var(--bg);
+    border-radius:var(--radius);padding:12px 20px;
+    font-family:'IBM Plex Mono', monospace;font-size:12px;letter-spacing:0.06em;
+    text-transform:uppercase;cursor:pointer;margin-bottom:10px;
+  }
+  .restart-btn:hover{background:var(--signal);}
+  .replay-note{font-size:11.5px;color:var(--text-soft);font-style:italic;margin-top:10px;}
+
+  /* Field guide modal */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(10,16,20,0.72);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:60px 18px;z-index:70;overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    max-width:520px;width:100%;padding:28px;
+  }
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .modal-head h3{font-family:'Space Grotesk', sans-serif;font-size:19px;margin:0;}
+  .modal-sub{font-size:12px;color:var(--text-soft);margin-bottom:18px;}
+  .close-x{background:none;border:none;color:var(--text-soft);font-size:20px;cursor:pointer;line-height:1;}
+  .close-x:hover{color:var(--signal);}
+  .g-locked{border-style:dashed;color:var(--text-soft);}
+  .g-locked .g-term{color:var(--text-soft);}
+
+  #confetti-layer{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;overflow:hidden;}
+  .confetti-piece{position:absolute;top:-20px;opacity:0.9;animation:confettiFall linear forwards;}
+  @keyframes confettiFall{to{transform:translateY(110vh) rotate(var(--rot));opacity:0;}}
+
+  #toast-layer{position:fixed;top:20px;right:20px;z-index:60;display:flex;flex-direction:column;gap:8px;}
+  .toast{
+    background:var(--panel);border:1px solid var(--signal);color:var(--text);
+    border-radius:var(--radius);padding:12px 16px;
+    font-family:'IBM Plex Mono', monospace;font-size:11px;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:0 4px 14px rgba(0,0,0,.3);
+    animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) forwards, toastOut .4s ease forwards 2.6s;
+    max-width:240px;
+  }
+  .toast .toast-title{text-transform:uppercase;letter-spacing:.06em;color:var(--signal);display:block;font-size:9px;margin-bottom:2px;}
+  @keyframes toastIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+  @keyframes toastOut{to{transform:translateX(30px);opacity:0;}}
+
+  @media (prefers-reduced-motion: reduce){
+    .meter-knob,.card,.toast,.tag,.confetti-piece,.level-chip{transition:none;animation:none;}
+  }
+  @media (max-width:480px){
+    .card{padding:26px 22px;}
+    .intro h1{font-size:25px;}
+    .term-word{font-size:27px;}
+    .scenario{font-size:18px;}
+    .how-it-works{flex-direction:column;}
+    .tag{top:16px;right:16px;font-size:9px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="wordmark">
+    <div class="wordmark-left">
+      <div class="name">SIGNAL<span class="dot">·</span>CHECK</div>
+    </div>
+    <div class="wordmark-right">
+      <div class="tag">A.I. Literacy Prototype</div>
+      <button class="icon-btn guide-btn" onclick="openGuide()" aria-label="Open field guide">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Field Guide
+      </button>
+      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" aria-label="Toggle sound"></button>
+    </div>
+  </div>
+  <hr class="rule">
+  <div id="trackerWrap"></div>
+  <div class="card" id="card"></div>
+</div>
+<div id="confetti-layer"></div>
+<div id="toast-layer"></div>
+<div class="modal-overlay" id="guideModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Your Field Guide</h3>
+      <button class="close-x" onclick="closeGuide()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-sub">Terms unlock as you tune into them during play.</div>
+    <div class="glossary-grid" id="guideList"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- content ---------------- */
+const rounds = [
+  {
+    freq: "91.4",
+    subject: "English",
+    term: "Prompt",
+    correctDef: "The instructions or question you give an A.I. Getting better results is less about \"asking\" and more about being specific about what you want, and what to leave out.",
+    distractors: [
+      "The A.I.'s final answer, after it finishes thinking",
+      "An error message the A.I. shows when it can't help"
+    ],
+    prompt: "You have a strong idea for an essay but are struggling to get started.",
+    calloutNote: "You just tuned in \"Prompt.\" Notice how different prompts here lead to very different amounts of actual thinking on your end.",
+    choices: [
+      { text: "Ask A.I. to write a full draft", meter: 8,
+        feedback: "This prompt handed over the whole task, not just help getting started. You'll have words on the page, but they're not your words or your thinking." },
+      { text: "Ask A.I. to generate an outline and key points", meter: 62,
+        feedback: "A more precise prompt gets you a more useful result: organization, not authorship. You still have to do the writing." },
+      { text: "Talk it through with a classmate", meter: 80,
+        feedback: "No prompt needed here at all, and that's worth noticing. Talking an idea through with a person is one of the oldest ways to get unstuck." },
+      { text: "Wait and hope inspiration comes later", meter: 40,
+        feedback: "This isn't a prompting problem, it's a different one: avoidance. It doesn't outsource your thinking, but it doesn't build momentum either." }
+    ]
+  },
+  {
+    freq: "94.9",
+    subject: "Math",
+    term: "Training Data",
+    correctDef: "The massive collection of text and examples an A.I. system learned patterns from before it was released. It's why A.I. is confident on common problems and shakier on unusual ones.",
+    distractors: [
+      "A test students take before they're allowed to use A.I. in class",
+      "The personal settings a user chooses before starting a chat"
+    ],
+    prompt: "You're stuck on a problem set that's due tomorrow morning.",
+    calloutNote: "You just tuned in \"Training Data.\" It explains why A.I. is usually strong on standard problems, and why it's worth double checking anything unusual.",
+    choices: [
+      { text: "Ask A.I. to solve all the problems and copy the answers", meter: 5,
+        feedback: "You'll have a finished assignment and no idea how to do it on the test. The gap between looking done and being done shows up fast in math." },
+      { text: "Ask A.I. to explain the concept you're stuck on, then try the problems yourself", meter: 72,
+        feedback: "This uses A.I. the way a good tutor would, to unstick your understanding, not to replace your effort." },
+      { text: "Ask A.I. to solve one similar example, then attempt the rest yourself", meter: 55,
+        feedback: "Worked examples can genuinely help you see a method. The risk is stopping there instead of testing whether you can apply it." },
+      { text: "Finish on your own, then check your final answers with A.I.", meter: 85,
+        feedback: "You did the thinking first and used A.I. as a check afterward, not a shortcut beforehand. That order matters." }
+    ]
+  },
+  {
+    freq: "98.2",
+    subject: "World Language",
+    term: "Large Language Model (LLM)",
+    correctDef: "A type of A.I. trained to predict likely next words based on patterns in enormous amounts of text. It's why it can sound fluent in a language without truly \"knowing\" it the way a person does.",
+    distractors: [
+      "A search engine that only looks up existing web pages",
+      "A program that translates using a fixed, built-in dictionary"
+    ],
+    prompt: "You're assigned a short paragraph in French about your weekend, due tomorrow.",
+    calloutNote: "You just tuned in \"Large Language Model.\" Fluent sounding output isn't the same thing as you actually learning the language.",
+    choices: [
+      { text: "Ask A.I. to write the whole paragraph, then turn it in", meter: 8,
+        feedback: "The assignment is asking whether you can produce French, not whether an LLM can. Turning this in as your own work misrepresents what happened." },
+      { text: "Write it yourself, then ask A.I. to point out grammar errors without rewriting it", meter: 78,
+        feedback: "You did the language production. The model just flagged mistakes for you to fix yourself, close to how a teacher might mark a draft." },
+      { text: "Ask A.I. for five useful vocabulary words on the topic, then write it yourself", meter: 82,
+        feedback: "This is A.I. as a dictionary, not a ghostwriter. You're still constructing every sentence." },
+      { text: "Ask a friend who's fluent to just write it for you", meter: 15,
+        feedback: "Worth noticing this has nothing to do with A.I. at all, and it's still the same problem: someone else did the thinking." }
+    ]
+  },
+  {
+    freq: "101.7",
+    subject: "Group Project",
+    term: "Transparency",
+    correctDef: "Being upfront about when and how you used A.I. on something you're turning in, instead of leaving people to assume you didn't.",
+    distractors: [
+      "Making an A.I. company release its source code publicly",
+      "A setting that lets an A.I. tool see everything on your screen"
+    ],
+    prompt: "Your part of a group project is a slide on a topic you don't understand well, and it's due tomorrow.",
+    calloutNote: "You just tuned in \"Transparency.\" It doesn't erase a shortcut, but it changes what your teammates are trusting you for.",
+    choices: [
+      { text: "Ask A.I. to write the slide and speaker notes, don't mention it to your group", meter: 10,
+        feedback: "Zero transparency here. Your teammates are trusting that everyone contributed real understanding, and that trust gets tested the moment you're asked a question about your slide." },
+      { text: "Ask A.I. to help you understand the topic, then write your own slide and notes", meter: 75,
+        feedback: "A.I. did what a textbook or tutor might do, help you learn something. You still built the slide and can explain it." },
+      { text: "Tell your group you're behind and ask for a day, using A.I. to catch up on the reading", meter: 88,
+        feedback: "Honest communication plus using A.I. to genuinely learn. This is often the option students are least likely to pick, and the one that holds up best." },
+      { text: "Let A.I. write it, but tell your group and offer to explain it before presenting", meter: 50,
+        feedback: "The transparency here matters and shouldn't be underrated. But you still might not fully understand your own slide if someone asks a follow up question." }
+    ]
+  },
+  {
+    freq: "104.5",
+    subject: "Test Prep",
+    term: "Overreliance",
+    correctDef: "Leaning on a tool so consistently that you lose the underlying skill it was supposed to support, not just the shortcut it gave you that one time.",
+    distractors: [
+      "When an A.I. system crashes because too many people are using it at once",
+      "A school rule that limits how many times you can use A.I. per day"
+    ],
+    prompt: "You have a big test in two days and want to use A.I. to study.",
+    calloutNote: "You just tuned in \"Overreliance.\" The test isn't whether you used A.I., it's whether you'd still be prepared if you couldn't.",
+    choices: [
+      { text: "Ask A.I. for the exact answers to your study guide", meter: 5,
+        feedback: "You'll recognize the answers on your study guide. You won't necessarily recognize the question when it's worded differently on the actual test." },
+      { text: "Ask A.I. to generate practice questions on the topics, then quiz yourself", meter: 76,
+        feedback: "This is closer to a real study session, testing your own recall instead of reviewing someone else's." },
+      { text: "Ask A.I. to explain a concept you keep forgetting, in a different way", meter: 78,
+        feedback: "Sometimes one explanation just doesn't click. A second angle from A.I. is a legitimate study tool, not a shortcut." },
+      { text: "Go back through your notes and textbook instead, no A.I.", meter: 90,
+        feedback: "There's nothing wrong with using A.I. to study, but this option is a good reminder that it's not the only path, and it carries zero overreliance risk." }
+    ]
+  },
+  {
+    freq: "107.3",
+    subject: "Research Paper",
+    term: "Hallucination",
+    correctDef: "When an A.I. states something false, or something that doesn't exist, with the same confident tone it uses for things that are actually true.",
+    distractors: [
+      "When an A.I. refuses to answer a question it's capable of answering",
+      "A visual glitch that sometimes appears in an A.I. generated image"
+    ],
+    prompt: "You found a source for your paper that looks useful, but it's long and dense.",
+    calloutNote: "You just tuned in \"Hallucination.\" This is exactly why citing a source you never actually read is risky, not just lazy.",
+    choices: [
+      { text: "Ask A.I. to summarize the whole source and cite it as if you read it", meter: 15,
+        feedback: "Citing a source implies you engaged with it. If the A.I. hallucinated a detail in its summary, you'd have no way to know, and your name is on the citation." },
+      { text: "Read the source yourself, then ask A.I. to help clarify one confusing paragraph", meter: 80,
+        feedback: "You did the reading. A.I. helped you get past one specific sticking point, a narrow, honest use of the tool." },
+      { text: "Ask A.I. to summarize it first to decide if it's worth reading closely", meter: 60,
+        feedback: "Using a summary to triage what's worth your time is a real research skill, as long as you're aware the summary itself could contain a hallucination worth double checking." },
+      { text: "Ask A.I. to generate citations for sources you haven't actually read", meter: 3,
+        feedback: "This is a hallucination risk stacked on top of a disclosure problem. Fabricated or misattributed citations are one of the most common and well documented A.I. failure modes." }
+    ]
+  },
+  {
+    freq: "110.6",
+    subject: "Computer Science",
+    term: "Generative A.I.",
+    correctDef: "A.I. that creates new content, like text, code, or images, rather than just retrieving or ranking things that already exist somewhere.",
+    distractors: [
+      "A.I. that is only used inside video games",
+      "A.I. that can only summarize documents you upload to it"
+    ],
+    prompt: "You're stuck on a coding assignment and the deadline is tonight.",
+    calloutNote: "You just tuned in \"Generative A.I.\" It can write code that runs, which is exactly why it's tempting to skip understanding it.",
+    choices: [
+      { text: "Ask A.I. to write the whole program for you", meter: 6,
+        feedback: "Generative A.I. can absolutely produce working code. What it can't do is make you the one who understands it when your teacher asks you to walk through the logic." },
+      { text: "Write your own attempt, then ask A.I. to help debug the one error you can't find", meter: 80,
+        feedback: "This is close to how professional programmers actually use generative A.I., as a second set of eyes on their own work." },
+      { text: "Copy A.I.'s code and rename the variables so it looks like your style", meter: 4,
+        feedback: "Worth sitting with this one. It's not just using generative A.I., it's actively disguising that you did, which is a different category of problem." },
+      { text: "Ask A.I. to explain the concept you're missing, then write the code yourself", meter: 75,
+        feedback: "A.I. filled a gap in your understanding. You still generated the actual code yourself, which is the skill the assignment is building." }
+    ]
+  },
+  {
+    freq: "113.8",
+    subject: "Study Group",
+    term: "Automation Bias",
+    correctDef: "The tendency to trust a machine's output more than you probably should, just because it came from a machine instead of a person.",
+    distractors: [
+      "A software bug that makes an A.I. respond more slowly than usual",
+      "When an A.I. is deliberately programmed to favor one viewpoint"
+    ],
+    prompt: "A friend in your study group texts you, stuck on the same homework, asking if you'll just send your answers.",
+    calloutNote: "You just tuned in \"Automation Bias.\" It's easy to assume an A.I.'s answer must be right just because it sounds so confident.",
+    choices: [
+      { text: "Send them the answer A.I. gave you when you did the assignment", meter: 20,
+        feedback: "You're not just making a choice about your own work anymore, you're helping a friend skip theirs, and passing along whatever automation bias was already baked into your own answer." },
+      { text: "Tell them you'll walk through how you got your answer, but won't send it", meter: 85,
+        feedback: "This protects both your integrity and theirs. A friend who understands the method survives the next test. A friend with your answer doesn't." },
+      { text: "Suggest they ask A.I. for a hint on the concept, not the answer, like you did", meter: 68,
+        feedback: "You're pointing them toward a legitimate use of the tool instead of a shortcut, and modeling healthy skepticism instead of blind trust." },
+      { text: "Ignore the text and let them figure it out alone", meter: 55,
+        feedback: "Not dishonest, but not especially helpful either. There's usually a way to support a friend's learning without doing the assignment for them." }
+    ]
+  }
+];
+
+/* ---------------- state ---------------- */
+let current = 0;
+let stage = "intro"; // intro | vocab | scenario | feedback | summary
+let choiceMade = null;
+let vocabAnswered = false;
+let soundOn = true;
+let deck = [];
+const log = [];
+const stats = { keyboardUses: 0, reflections: 0, zonesTouched: new Set(), vocabCorrect: 0 };
+const unlockedTerms = new Set(); // ids of rounds whose term has been revealed
+const achUnlocked = new Set();
+
+function shuffledDeck(){
+  const arr = rounds.map((r,i) => ({...r, id:i}));
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+deck = shuffledDeck();
+
+const card = document.getElementById("card");
+const trackerWrap = document.getElementById("trackerWrap");
+const soundBtn = document.getElementById("soundBtn");
+const toastLayer = document.getElementById("toast-layer");
+
+/* ---------------- sound ---------------- */
+const ICON_ON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16 8a5 5 0 0 1 0 8" stroke-linecap="round"/></svg>';
+const ICON_OFF = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke-linecap="round"/></svg>';
+function updateSoundBtn(){ soundBtn.innerHTML = soundOn ? ICON_ON : ICON_OFF; }
+function toggleSound(){ soundOn = !soundOn; updateSoundBtn(); if(soundOn) playTone(520,.08,"sine",.05); }
+updateSoundBtn();
+
+let audioCtx = null;
+function getCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+function playTone(freq, dur, type, vol){
+  if(!soundOn) return;
+  try{
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || .06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + dur);
+  }catch(e){}
+}
+function playSelect(){ playTone(360,.09,"sine",.05); }
+function playAdvance(){ playTone(440,.07,"triangle",.05); setTimeout(()=>playTone(600,.09,"triangle",.05),70); }
+function playCorrect(){ [560,760].forEach((f,i)=> setTimeout(()=>playTone(f,.12,"sine",.05), i*90)); }
+function playWrong(){ playTone(180,.18,"sawtooth",.04); }
+function playComplete(){ [520,660,780,880].forEach((f,i)=> setTimeout(()=>playTone(f,.16,"sine",.05), i*100)); }
+function playStatic(){ playTone(200 + Math.random()*100, .05, "sawtooth", .02); }
+
+/* ---------------- helpers ---------------- */
+function meterZoneLabel(v){
+  if(v <= 20) return "Mostly outsourced";
+  if(v <= 45) return "Leaning on A.I. more than you";
+  if(v <= 65) return "A fair middle ground";
+  if(v <= 85) return "You stayed in the driver's seat";
+  return "Fully your own thinking";
+}
+function zoneColor(v){
+  if(v <= 20) return "#C1614F";
+  if(v <= 45) return "#5C6B71";
+  if(v <= 65) return "#E08A3C";
+  if(v <= 85) return "#7FA8B8";
+  return "#6FA98A";
+}
+function levelInfo(){
+  const c = stats.vocabCorrect;
+  if(c <= 2) return { name:"Static", pct: c/8 };
+  if(c <= 4) return { name:"Tuning In", pct: c/8 };
+  if(c <= 6) return { name:"Clear Signal", pct: c/8 };
+  return { name:"Full Broadcast", pct: c/8 };
+}
+
+function shuffleChoices(round){
+  const opts = [
+    { text: round.correctDef, correct: true },
+    { text: round.distractors[0], correct: false },
+    { text: round.distractors[1], correct: false }
+  ];
+  for(let i = opts.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return opts;
+}
+
+function renderTracker(){
+  const filled = log.length;
+  const lvl = levelInfo();
+  let bars = "";
+  for(let i=0;i<deck.length;i++){
+    const has = log[i];
+    bars += `<div class="bar${has ? " filled" : ""}" style="background:${has ? zoneColor(has.meter) : ""}" title="${deck[i].subject}"></div>`;
+  }
+  const freqNow = stage === "summary" ? deck[deck.length-1].freq : (deck[current] ? deck[current].freq : deck[0].freq);
+  trackerWrap.innerHTML = `
+    <div class="dial-row">
+      <span class="freq">${stage === "summary" ? "SIGNAL COMPLETE" : freqNow + " FM"}</span>
+      <span class="level-chip" id="levelChip">${lvl.name} · ${stats.vocabCorrect}/8 terms</span>
+    </div>
+    <div class="bars-row">${bars}</div>
+  `;
+}
+function pulseLevel(){
+  const chip = document.getElementById("levelChip");
+  if(chip){ chip.classList.remove("pulse"); void chip.offsetWidth; chip.classList.add("pulse"); }
+}
+
+/* ---------------- field guide modal ---------------- */
+function renderGuide(){
+  const list = document.getElementById("guideList");
+  list.innerHTML = deck.map(r => {
+    if(unlockedTerms.has(r.id)){
+      return `<div class="g-card"><div class="g-term">${r.term}</div><div class="g-def">${r.correctDef}</div></div>`;
+    }
+    return `<div class="g-card g-locked"><div class="g-term">🔒 Not yet tuned</div><div class="g-def">Play through Case: ${r.subject} to unlock this term.</div></div>`;
+  }).join("");
+}
+function openGuide(){ renderGuide(); document.getElementById("guideModal").classList.add("open"); }
+function closeGuide(){ document.getElementById("guideModal").classList.remove("open"); }
+
+/* ---------------- achievements ---------------- */
+const ICON_TARGET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>';
+const ICON_PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/></svg>';
+const ICON_BOLT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke-linejoin="round"/></svg>';
+const ICON_ANTENNA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V10"/><path d="M12 2l7 8H5l7-8z"/><path d="M8 6a6 6 0 0 0 0 8M16 6a6 6 0 0 1 0 8" stroke-linecap="round"/></svg>';
+
+const achievementDefs = [
+  { id:"range", icon:ICON_TARGET, title:"Range Finder", desc:"Landed in every zone of the meter at least once", test: () => stats.zonesTouched.size >= 5 },
+  { id:"reflective", icon:ICON_PEN, title:"Field Notes", desc:"Wrote a reflection on 4+ cases", test: () => stats.reflections >= 4 },
+  { id:"quickdraw", icon:ICON_BOLT, title:"Fast Tuner", desc:"Used keyboard shortcuts 3+ times", test: () => stats.keyboardUses >= 3 },
+  { id:"perfecttune", icon:ICON_ANTENNA, title:"Perfect Tune", desc:"Got all 8 vocabulary terms right", test: () => stats.vocabCorrect >= 8 }
+];
+function showToast(title, desc){
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerHTML = `<div><span class="toast-title">${title}</span>${desc}</div>`;
+  toastLayer.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+function checkAchievements(){
+  achievementDefs.forEach(a => {
+    if(!achUnlocked.has(a.id) && a.test()){
+      achUnlocked.add(a.id);
+      showToast("Achievement unlocked", a.title);
+      playTone(700,.12,"sine",.05);
+    }
+  });
+}
+
+/* ---------------- persona ---------------- */
+const ICON_MASK = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 20c4-6 12-10 16-10s12 4 16 10c0 10-8 18-16 18S8 30 8 20z"/><circle cx="17" cy="21" r="2" fill="currentColor" stroke="none"/><circle cx="31" cy="21" r="2" fill="currentColor" stroke="none"/><path d="M17 30c3 2 11 2 14 0" stroke-linecap="round"/></svg>';
+const ICON_FASTFWD = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 12l16 12L6 36V12z" fill="currentColor" stroke="none"/><path d="M24 12l16 12-16 12V12z" fill="currentColor" stroke="none"/></svg>';
+const ICON_SCALE = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M24 6v34M14 40h20" stroke-linecap="round"/><path d="M8 16h12M28 16h12" stroke-linecap="round"/><path d="M8 16l-4 9a5 5 0 0010 0l-4-9zM40 16l-4 9a5 5 0 0010 0l-4-9z"/></svg>';
+const ICON_COMPASS = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><circle cx="24" cy="24" r="17"/><path d="M30 18l-4 12-8 4 4-12 8-4z" fill="currentColor" stroke="none"/></svg>';
+const ICON_SHIELD = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><path d="M24 5l15 6v11c0 11-7 18-15 21-8-3-15-10-15-21V11l15-6z"/><path d="M17 24l5 5 9-10" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const personas = [
+  { max:20, title:"The Full Delegator", icon:ICON_MASK,
+    blurb:"Across these cases, you mostly handed the thinking to A.I. and kept the output. That's the fastest way through homework, and also the way most likely to leave you unable to explain your own work if someone asks.",
+    caveat:"Worth trying: pick one subject this week and do the first attempt yourself before A.I. touches it." },
+  { max:45, title:"The Shortcut Taker", icon:ICON_FASTFWD,
+    blurb:"You lean on A.I. more than you lean on yourself, usually to save time under deadline pressure. That's a real pattern, not a character flaw, but it's worth noticing which subjects it shows up in most.",
+    caveat:"Worth trying: notice the moment right before you open A.I. That's usually where the actual choice happens." },
+  { max:65, title:"The Balancer", icon:ICON_SCALE,
+    blurb:"Your choices landed in the middle most often, using A.I. to get unstuck or organized, then finishing the thinking yourself. That's a genuinely reasonable place to sit.",
+    caveat:"Worth trying: ask yourself, after each use, whether you could redo the task without the tool. If not, it may have done more than you meant it to." },
+  { max:85, title:"The Independent Thinker", icon:ICON_COMPASS,
+    blurb:"You mostly used A.I. to check or clarify your own thinking, not replace it. Your work in these cases stayed yours from start to finish.",
+    caveat:"Worth trying: this pattern holds up well, just make sure it's genuine confidence and not avoidance of a tool that could actually help sometimes." },
+  { max:101, title:"The Purist", icon:ICON_SHIELD,
+    blurb:"You barely leaned on A.I. at all in these cases. Your academic integrity is airtight here, and that's real.",
+    caveat:"Worth trying: A.I. can be a legitimate tool, not just a risk. It's worth testing where it could actually help you without costing you anything." }
+];
+function getPersona(avg){ return personas.find(p => avg <= p.max); }
+
+/* ---------------- renderers ---------------- */
+function renderIntro(){
+  card.innerHTML = `
+    <div class="intro">
+      <h1>Find the <span>signal</span>. Skip the static.</h1>
+      <p>Eight frequencies. Each one starts with a piece of real A.I. vocabulary, then drops you into a situation where that exact idea is on the line.</p>
+      <div class="how-it-works">
+        <div class="how-step"><div class="step-num">STEP 1</div><div class="step-desc">Tune in a term. Pick what it actually means.</div></div>
+        <div class="how-step"><div class="step-num">STEP 2</div><div class="step-desc">Use it. Face a real school situation tied to that term.</div></div>
+        <div class="how-step"><div class="step-num">STEP 3</div><div class="step-desc">Log it. See where your choice landed, no score attached.</div></div>
+      </div>
+      <p>There's no "right" path through the scenarios, only ones you can explain and stand behind. The vocabulary questions do have correct answers though, so pay attention.</p>
+      <div class="note">This is a prototype. Nothing here is saved, graded, or sent to anyone. It's just for you.</div>
+      <button class="begin-btn" onclick="startGame()">Start tuning</button>
+      <div class="kbd-hint">Tip: use <kbd>1</kbd>–<kbd>4</kbd> to choose and <kbd>Enter</kbd> to continue</div>
+    </div>
+  `;
+}
+
+const STATIC_ICON = '<svg class="static-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h2M19 12h2M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>';
+
+function renderVocab(){
+  const r = deck[current];
+  vocabAnswered = false;
+  const opts = shuffleChoices(r);
+  r._opts = opts;
+  card.innerHTML = `
+    <div class="stage-label">${STATIC_ICON} Tuning in · ${r.freq} FM</div>
+    <div class="term-word">${r.term}</div>
+    <div class="term-sub">Which definition is correct?</div>
+    <div class="vocab-choices" id="vocabChoices">
+      ${opts.map((o,i) => `
+        <button class="vocab-btn" onclick="answerVocab(${i})" id="vocab-${i}">
+          <span class="vocab-letter">${String.fromCharCode(65+i)}</span>${o.text}
+        </button>
+      `).join("")}
+    </div>
+    <div id="vocabResultWrap"></div>
+  `;
+}
+
+function answerVocab(i){
+  if(vocabAnswered) return;
+  vocabAnswered = true;
+  const r = deck[current];
+  const opts = r._opts;
+  const isCorrect = opts[i].correct;
+  document.querySelectorAll(".vocab-btn").forEach((btn, idx) => {
+    btn.disabled = true;
+    if(opts[idx].correct) btn.classList.add("correct");
+    else if(idx === i) btn.classList.add("wrong");
+  });
+  unlockedTerms.add(r.id);
+  if(isCorrect){
+    stats.vocabCorrect++;
+    playCorrect();
+  } else {
+    playWrong();
+  }
+  pulseLevel();
+  renderTracker();
+  checkAchievements();
+  const resultWrap = document.getElementById("vocabResultWrap");
+  resultWrap.innerHTML = `
+    <div class="vocab-result">
+      <div class="rt ${isCorrect ? "ok" : "no"}">${isCorrect ? "Signal locked" : "That was static"}</div>
+      <div class="rd">${r.correctDef}</div>
+    </div>
+    <button class="next-btn" onclick="goToScenario()">Use this term</button>
+    <div class="kbd-hint">Tip: press <kbd>Enter</kbd> to continue</div>
+  `;
+}
+
+function renderScenario(){
+  const r = deck[current];
+  card.innerHTML = `
+    <div class="stage-label">Case ${current+1} of ${deck.length} · ${r.subject}</div>
+    <div class="term-callout">${r.term}</div>
+    <div class="scenario">"${r.prompt}"</div>
+    <div class="choices">
+      ${r.choices.map((c,i) => `
+        <button class="choice-btn" onclick="selectChoice(${i})">
+          <span class="choice-letter">${String.fromCharCode(65+i)}</span>${c.text}
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function stampText(v){
+  if(v <= 20) return "Flagged";
+  if(v <= 45) return "Noted";
+  if(v <= 65) return "Filed";
+  if(v <= 85) return "Filed clean";
+  return "Case closed";
+}
+
+function renderFeedback(){
+  const r = deck[current];
+  const c = r.choices[choiceMade];
+  const col = zoneColor(c.meter);
+  card.innerHTML = `
+    <div class="tag" style="border-color:${col};color:${col};">${stampText(c.meter)}</div>
+    <div class="chosen-echo">You chose: <span>${c.text}</span></div>
+    <div class="feedback-text">${c.feedback}</div>
+    <div class="meter-wrap">
+      <div class="meter-heads"><span>Outsourced</span><span>Owned</span></div>
+      <div class="meter-track"><div class="meter-knob" id="knob" style="left:0%"></div></div>
+      <div class="meter-zone">${meterZoneLabel(c.meter)}</div>
+    </div>
+    <div class="reflect">
+      <label>Optional: how would you explain this choice to a teacher?</label>
+      <textarea id="reflectBox" placeholder="Type a sentence or two, just for yourself..."></textarea>
+      <div class="hint">Not saved. Not graded. Just a way to check your own reasoning.</div>
+    </div>
+    <button class="next-btn" onclick="nextRound()">${current < deck.length - 1 ? "Next frequency" : "See your signal report"}</button>
+    <div class="kbd-hint">Tip: press <kbd>Enter</kbd> to continue</div>
+  `;
+  requestAnimationFrame(() => {
+    const knob = document.getElementById("knob");
+    if(knob) knob.style.left = c.meter + "%";
+  });
+}
+
+function renderSummary(){
+  const avg = Math.round(log.reduce((sum,e) => sum + e.meter, 0) / log.length);
+  const persona = getPersona(avg);
+  const lvl = levelInfo();
+  const achievementsHtml = achievementDefs.map(a => `
+    <div class="achievement${achUnlocked.has(a.id) ? "" : " locked"}">
+      <div class="a-icon">${a.icon}</div>
+      <div><div class="a-title">${a.title}</div><div class="a-desc">${achUnlocked.has(a.id) ? a.desc : "Locked · " + a.desc}</div></div>
+    </div>
+  `).join("");
+  card.innerHTML = `
+    <div class="summary">
+      <div class="field-report">
+        <div class="eyebrow">Your signal report</div>
+        <div class="persona-row"><div class="persona-icon">${persona.icon}</div><h2>${persona.title}</h2></div>
+        <p>${persona.blurb}</p>
+        <div class="caveat">${persona.caveat}</div>
+      </div>
+      <div class="xp-summary">
+        <div class="xs-left">
+          <div class="xs-title">${lvl.name}</div>
+          <div class="xs-sub">${stats.vocabCorrect} of 8 terms tuned correctly</div>
+        </div>
+      </div>
+      <h2 style="font-size:18px;">Field Guide</h2>
+      <div class="sub">Every term you unlocked this run, in case you want to keep it.</div>
+      <div class="glossary-grid">
+        ${deck.map(r => `<div class="g-card"><div class="g-term">${r.term}</div><div class="g-def">${r.correctDef}</div></div>`).join("")}
+      </div>
+      <h2 style="font-size:18px;">Achievements</h2>
+      <div class="badges-grid">${achievementsHtml}</div>
+      <h2 style="font-size:18px;">Case log</h2>
+      <div class="sub">${log.length} choices, ${log.length} tradeoffs. Nothing here was right or wrong, but you could probably explain every one of them if someone asked.</div>
+      ${log.map(entry => `
+        <div class="log-row">
+          <div class="log-left"><div class="log-case">${entry.label}</div><div class="log-choice">${entry.choiceText}</div></div>
+          <div class="log-dot" style="background:${zoneColor(entry.meter)}" title="${meterZoneLabel(entry.meter)}"></div>
+        </div>
+      `).join("")}
+      <div class="closing">These same tradeoffs show up in real classes, all year, in different clothes. The point isn't to memorize eight terms and eight answers. It's to get in the habit of asking two questions before you use A.I. on something: do I understand the tool I'm using, and will I still be able to explain how I got here? This report is a snapshot from one run, not a permanent label. Every replay deals a new frequency order.</div>
+      <button class="save-btn" onclick="saveReport()">Save signal report</button>
+      <button class="restart-btn" onclick="restart()">Play again</button>
+      <div class="replay-note">Playing again reshuffles the frequencies and can unlock achievements you missed.</div>
+    </div>
+  `;
+  launchConfetti();
+}
+
+function saveReport(){
+  const avg = Math.round(log.reduce((sum,e) => sum + e.meter, 0) / log.length);
+  const persona = getPersona(avg);
+  const lvl = levelInfo();
+  const canvas = document.createElement("canvas");
+  canvas.width = 900; canvas.height = 620;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#152229"; ctx.fillRect(0,0,900,620);
+  ctx.strokeStyle = "#E08A3C"; ctx.lineWidth = 3; ctx.strokeRect(20,20,860,580);
+  ctx.fillStyle = "#E08A3C";
+  ctx.font = "600 14px monospace";
+  ctx.fillText("SIGNAL · CHECK — SIGNAL REPORT", 60, 90);
+  ctx.fillStyle = "#EDF1F0";
+  ctx.font = "700 42px Georgia, sans-serif";
+  wrapText(ctx, persona.title, 60, 155, 780, 48);
+  ctx.font = "16px Georgia, sans-serif";
+  ctx.fillStyle = "#9FB4BC";
+  wrapText(ctx, persona.blurb, 60, 225, 780, 26);
+  ctx.font = "italic 14px Georgia, sans-serif";
+  ctx.fillStyle = "#E08A3C";
+  wrapText(ctx, persona.caveat, 60, 400, 780, 22);
+  ctx.font = "600 16px monospace";
+  ctx.fillStyle = "#EDF1F0";
+  ctx.fillText(`${lvl.name} · ${stats.vocabCorrect}/8 A.I. terms tuned correctly`, 60, 500);
+  ctx.font = "11px monospace";
+  ctx.fillStyle = "#9FB4BC";
+  ctx.fillText(`Based on ${log.length} cases · a snapshot, not a label`, 60, 560);
+
+  const link = document.createElement("a");
+  link.download = "signal-check-report.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(" ");
+  let line = "";
+  for(let n=0;n<words.length;n++){
+    const test = line + words[n] + " ";
+    if(ctx.measureText(test).width > maxWidth && n > 0){ ctx.fillText(line, x, y); line = words[n] + " "; y += lineHeight; }
+    else { line = test; }
+  }
+  ctx.fillText(line, x, y);
+}
+
+function launchConfetti(){
+  const layer = document.getElementById("confetti-layer");
+  layer.innerHTML = "";
+  const colors = ["#E08A3C", "#6FA98A", "#7FA8B8", "#EDF1F0", "#C1614F"];
+  for(let i=0;i<36;i++){
+    const p = document.createElement("div");
+    const size = 5 + Math.random()*5;
+    p.className = "confetti-piece";
+    p.style.left = Math.random()*100 + "vw";
+    p.style.width = size + "px";
+    p.style.height = size*0.6 + "px";
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.setProperty("--rot", (Math.random()*720-360) + "deg");
+    p.style.animationDuration = (1.6 + Math.random()*1.2) + "s";
+    p.style.animationDelay = (Math.random()*0.4) + "s";
+    layer.appendChild(p);
+  }
+  setTimeout(() => { layer.innerHTML = ""; }, 3200);
+}
+
+/* ---------------- flow control ---------------- */
+function startGame(){
+  stage = "vocab";
+  playAdvance();
+  renderTracker();
+  renderVocab();
+}
+function goToScenario(){
+  stage = "scenario";
+  playAdvance();
+  renderTracker();
+  renderScenario();
+}
+function selectChoice(i){
+  choiceMade = i;
+  const r = deck[current];
+  const meter = r.choices[i].meter;
+  log.push({ label: r.subject, choiceText: r.choices[i].text, meter: meter });
+  stats.zonesTouched.add(zoneColor(meter));
+  stage = "feedback";
+  playSelect();
+  renderTracker();
+  renderFeedback();
+  checkAchievements();
+}
+function captureReflection(){
+  const box = document.getElementById("reflectBox");
+  if(box && box.value.trim().length > 0){ stats.reflections++; checkAchievements(); }
+}
+function nextRound(){
+  captureReflection();
+  if(current < deck.length - 1){
+    current++;
+    choiceMade = null;
+    stage = "vocab";
+    playAdvance();
+    renderTracker();
+    renderVocab();
+  } else {
+    stage = "summary";
+    playComplete();
+    renderTracker();
+    renderSummary();
+    checkAchievements();
+  }
+}
+function restart(){
+  current = 0;
+  choiceMade = null;
+  stage = "intro";
+  log.length = 0;
+  deck = shuffledDeck();
+  renderTracker();
+  renderIntro();
+}
+
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape"){ closeGuide(); return; }
+  if(stage === "intro" && e.key === "Enter"){ startGame(); }
+  else if(stage === "vocab" && ["1","2","3"].includes(e.key) && !vocabAnswered){
+    stats.keyboardUses++;
+    answerVocab(parseInt(e.key,10) - 1);
+  }
+  else if(stage === "vocab" && e.key === "Enter" && vocabAnswered){ goToScenario(); }
+  else if(stage === "scenario" && ["1","2","3","4"].includes(e.key)){
+    const idx = parseInt(e.key,10) - 1;
+    if(deck[current] && deck[current].choices[idx]){
+      stats.keyboardUses++;
+      selectChoice(idx);
+    }
+  }
+  else if(stage === "feedback" && e.key === "Enter"){ nextRound(); }
+  else if(stage === "summary" && e.key === "Enter"){ restart(); }
+});
+
+renderTracker();
+renderIntro();
+</script>
+</body>
+</html>
